@@ -205,6 +205,25 @@ it.effect("launches stable Zed when a nightly install comes first on PATH", () =
   }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
 );
 
+it("recognizes prerelease Zed installs by their own folder name only", () => {
+  for (const prerelease of [
+    "C:\\Users\\me\\AppData\\Local\\Programs\\Zed Preview\\bin\\zed.exe",
+    "C:\\Users\\me\\AppData\\Local\\Programs\\Zed Nightly\\bin\\zed.exe",
+    "/Applications/Zed Nightly.app/Contents/MacOS/cli",
+    "/home/me/.local/zed-preview.app/bin/zed",
+  ]) {
+    assert.equal(ExternalLauncher.isPrereleaseZedPath(prerelease), true, prerelease);
+  }
+  for (const stable of [
+    "C:\\Users\\preview-user\\AppData\\Local\\Programs\\Zed\\bin\\zed.exe",
+    "C:\\nightly-builds\\Zed\\bin\\zed.exe",
+    "/Applications/Zed.app/Contents/MacOS/cli",
+    "/home/me/.local/zed.app/bin/zed",
+  ]) {
+    assert.equal(ExternalLauncher.isPrereleaseZedPath(stable), false, stable);
+  }
+});
+
 it.effect.skipIf(windowsHost)("reveals a file in Finder with open -R on macOS", () =>
   Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;

@@ -183,9 +183,18 @@ const resolveAvailableCommand = Effect.fn("externalLauncher.resolveAvailableComm
 // PATH order alone can open a prerelease build when the user picked "Zed".
 // Prefer the first install whose location does not name a prerelease channel
 // and, when that is not the first on PATH, launch it by absolute path.
-function isPrereleaseZedPath(filePath: string): boolean {
-  const normalized = filePath.toLowerCase();
-  return normalized.includes("nightly") || normalized.includes("preview");
+// A prerelease install is recognized by a single path component that names
+// both Zed and the channel (`Zed Preview`, `Zed Nightly.app`,
+// `zed-nightly.app`), so a user or folder called "preview" elsewhere in the
+// path does not count.
+export function isPrereleaseZedPath(filePath: string): boolean {
+  return filePath.split(/[\\/]/).some((component) => {
+    const normalized = component.toLowerCase();
+    return (
+      normalized.includes("zed") &&
+      (normalized.includes("nightly") || normalized.includes("preview"))
+    );
+  });
 }
 
 const resolveZedCommand = Effect.fn("externalLauncher.resolveZedCommand")(function* (
