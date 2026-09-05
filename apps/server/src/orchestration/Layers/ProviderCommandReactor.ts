@@ -655,6 +655,19 @@ const make = Effect.gen(function* () {
       }
     }
     const project = yield* resolveProject(thread.projectId);
+    // A project root that was moved or deleted after it was added would
+    // otherwise surface as a provider spawn failure that never names the
+    // folder. Check it here so every provider reports the same cause.
+    const projectRootExists = project
+      ? yield* fileSystem.exists(project.workspaceRoot).pipe(Effect.orElseSucceed(() => true))
+      : true;
+    if (project && !projectRootExists) {
+      return yield* new ProviderAdapterRequestError({
+        provider: preferredProvider,
+        method: "thread.turn.start",
+        detail: `This project's folder no longer exists: ${project.workspaceRoot}`,
+      });
+    }
     const effectiveCwd = resolveThreadWorkspaceCwd({
       thread,
       projects: project ? [project] : [],
